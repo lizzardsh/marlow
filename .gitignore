@@ -1,0 +1,19 @@
+# Derleme
+/marlow
+/marlow.exe
+/dist/
+/build/
+*.test
+*.out
+
+# Testler
+/output_preview.go
+*_test.go
+/test/
+/tests/
+
+# Yerel
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
