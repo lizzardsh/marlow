@@ -26,11 +26,12 @@ Every published release includes:
 Push a version tag to start the GitHub Actions workflow. It checks the Go packages, builds the release files, and publishes them to the repository’s Releases page:
 
 ```sh
-git tag -a v0.1.0 -m "MARLOW v0.1.0"
-git push origin v0.1.0
+git tag -a vX.Y.Z -m "MARLOW vX.Y.Z"
+git push origin main
+git push origin vX.Y.Z
 ```
 
-Use a new version tag for each release. The first run appears under the repository’s **Actions** tab; after it succeeds, the assets appear under **Releases**.
+Replace `vX.Y.Z` with a new semantic version for each release. Pushing the tag starts the GitHub Actions workflow; after it passes, the workflow publishes binaries, checksums, and generated release notes under **Releases**.
 
 ## Build from source
 

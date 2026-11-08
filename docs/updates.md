@@ -4,16 +4,14 @@
 
 ### Options
 
-- Added readable aliases: `--ports`, `--all-ports`, `--modules`, `--services`, `--auto-services`, `--userlist`, and `--passlist`.
-- Kept the existing short options working for compatibility.
-- `-p-` is now parsed as a dedicated all-ports option and scans TCP ports `1-65535`.
-- `-sV` still means an explicit module list in MARLOW. It requires one module per port, in the same order. `--modules` is the clearer long option for new scripts.
-
-`-sV` currently differs from Nmap’s version-detection flag. If MARLOW adopts that Nmap behavior later, the old spelling will be deprecated through a documented version change; `--modules` is the forward-compatible spelling for explicit modules.
+- Standardized usage around `marlow scan <target> [options]`.
+- Added readable options: `--ports`, `--all-ports`, `--versions`, `--service-checks`, and `--modules`.
+- Kept legacy scan flags accepted for existing scripts.
+- Module selection now names a set of checks and matches them against their default ports; modules no longer need to be listed one-for-one with scanned ports.
 
 ### Current scan scope
 
-MARLOW currently performs TCP connect scans. The all-ports option scans all TCP ports; it does not enable SYN, UDP, or other Nmap scan modes. Those can be added later as separately named scan modes without changing the meaning of `-p`, `--timeout`, or `--workers`.
+MARLOW currently performs TCP connect scans. `--all-ports` scans all TCP ports; it does not enable SYN, UDP, or other scan modes.
 
 The longer-term project scope is a shared enumeration toolkit: port discovery and service checks first, followed by DNS enumeration and HTTP path discovery. See the [Roadmap](roadmap.md); planned items are not available in the current release.
 

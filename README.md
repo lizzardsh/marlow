@@ -8,9 +8,9 @@
 
 ---
 
-## About
+## Vision
 
-MARLOW is intended to bring network discovery and enumeration tasks under one modular CLI. The current release focuses on TCP port scanning and a small set of service checks; DNS enumeration and web content discovery are planned as separate module families.
+MARLOW is a modular command-line tool for authorized network surface discovery. Its workflow is designed to move from finding reachable TCP ports, to identifying the services behind them, to running focused protocol checks. The same command structure will grow to cover DNS and web discovery, with each area using options suited to that task.
 
 ## Features
 
@@ -37,13 +37,15 @@ go build -o marlow ./cmd
 ./marlow -h
 ```
 
-Scan common ports and run the matching service modules:
+Scan common ports, identify basic service versions, and run matching service checks:
 
 ```sh
-./marlow -p 21,22,80,443,445 -s- 192.0.2.10
+./marlow scan 192.0.2.10 --ports 21,22,80,443,445 --versions --service-checks
 ```
 
-See [Installation](docs/installation.md) for release downloads and publishing, [Usage](docs/usage.md) for current CLI options, [Roadmap](docs/roadmap.md) for planned module families, and [Updates](docs/updates.md) for changes.
+The default command scans common TCP ports and reports which are open. Add `--versions` for basic service details or `--service-checks` for built-in checks on recognized services. `--all-ports` scans the full TCP range.
+
+See [Installation](docs/installation.md) for release downloads and publishing, [Usage](docs/usage.md) for commands and options, [Roadmap](docs/roadmap.md) for the project direction, and [Updates](docs/updates.md) for changes.
 
 ## Project layout
 

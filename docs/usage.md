@@ -1,74 +1,67 @@
 # Usage
 
+All current network operations use the `scan` command:
+
 ```text
-marlow [OPTIONS] <TARGET_IP_OR_DOMAIN>
+marlow scan <target> [options]
+```
+
+The target can be an IP address or a hostname. Options can appear before or after the target.
+
+## Common workflows
+
+Scan the default set of common TCP ports:
+
+```sh
+marlow scan 192.0.2.10
+```
+
+Scan selected ports, show basic service and version details, and run the built-in checks for recognized services:
+
+```sh
+marlow scan example.org --ports 21,22,80,443,445 --versions --service-checks
+```
+
+Scan all TCP ports and collect service details:
+
+```sh
+marlow scan 192.0.2.10 --all-ports --versions
+```
+
+Run only selected built-in modules. Module selection automatically enables service checks and applies each module to its recognized default port:
+
+```sh
+marlow scan 192.0.2.10 --modules http,ssh
+```
+
+Run FTP checks with supplied wordlists:
+
+```sh
+marlow scan 192.0.2.10 --modules ftp --ftp-userlist users.txt --ftp-passlist passwords.txt
 ```
 
 ## Options
 
 | Option | Description |
 | --- | --- |
-| `-p <ports>`, `--ports <ports>` | Comma-separated ports or ranges, for example `21,80,443` or `1-1024`. Defaults to common ports. |
-| `-p-`, `--all-ports` | Scan TCP ports `1-65535`. This takes precedence over `-p`. |
-| `-sV <modules>`, `--modules <modules>` | Run explicit modules, one per specified port and in the same order. Supported: `ftp`, `http`, `smb`, `ssh`. `--services` is also accepted. |
-| `-s-`, `--auto-services` | Automatically run a registered module when an open port matches that module’s default port. |
-| `-version-detect`, `--version-detect` | Probe open ports for service banners and basic version details. HTTP probes report status and the `Server` header; HTTPS probes also report the negotiated TLS version. |
-| `-Uw <path>`, `--userlist <path>` | Username wordlist for FTP checks. |
-| `-Pw <path>`, `--passlist <path>` | Password wordlist for FTP checks. Must be supplied with a username list. |
-| `-timeout <duration>`, `--timeout <duration>` | TCP connection timeout per port. Default: `3s`. |
-| `-workers <count>`, `--workers <count>` | Concurrent TCP scan workers. Default: `256`. |
-| `-h` | Print help. |
+| `--ports <list>` | Comma-separated TCP ports or ranges. Default: common ports. Example: `22,80,443` or `1-1024`. |
+| `--all-ports` | Scan TCP ports `1-65535`; overrides `--ports`. |
+| `--versions` | Read service banners and collect basic version details from open ports. HTTP checks report status and the `Server` header; HTTPS checks also report negotiated TLS version. |
+| `--service-checks` | Run built-in checks for recognized open services. |
+| `--modules <list>` | Limit built-in checks to a comma-separated list: `ftp,http,smb,ssh`. Implies `--service-checks`. Modules are matched to their default ports. |
+| `--ftp-userlist <path>` | FTP username wordlist. Requires `--ftp-passlist`. |
+| `--ftp-passlist <path>` | FTP password wordlist. Requires `--ftp-userlist`. |
+| `--timeout <duration>` | Per-connection timeout. Default: `3s`. |
+| `--workers <count>` | Concurrent TCP scan workers. Default: `256`. |
+| `-h`, `--help` | Show scan help. Use `marlow help` for the top-level command. |
 
-## Examples
+Version details depend on the protocol's greeting or HTTP headers. The current detector covers FTP, SSH, SMTP, POP3, IMAP, and HTTP(S) on common web ports; it is a lightweight fingerprinting feature, not a broad service-probe database.
 
-Scan selected ports and automatically run matching service modules:
+## Service checks
 
-```sh
-marlow -p 21,22,80,443,445 -s- 192.0.2.10
-```
-
-Scan every TCP port:
-
-```sh
-marlow -p- -s- example.org
-marlow --all-ports --auto-services example.org
-```
-
-Collect basic service and version details from open ports:
-
-```sh
-marlow -p 21,22,25,80,443,8080 -version-detect example.org
-```
-
-Version detection currently reads greetings from FTP, SSH, SMTP, POP3, and IMAP, and sends an HTTP `HEAD` request on common web ports. It reports the server's own banner or `Server` header where available; results depend on what each service reveals and are not a full Nmap service fingerprint database. `-sV` remains the existing option for explicitly mapping service modules to ports.
-
-Run explicit modules. The service list must have one entry for each specified port, in matching order:
-
-```sh
-marlow -p 21,80,445 -sV ftp,http,smb 192.0.2.10
-marlow -p 22 -sV ssh 192.0.2.10
-marlow --ports 22 --modules ssh 192.0.2.10
-```
-
-Run FTP checks with local wordlists:
-
-```sh
-marlow -p 21 -sV ftp -Uw users.txt -Pw passwords.txt 192.0.2.10
-```
-
-Adjust concurrency and timeout:
-
-```sh
-marlow -p 1-1024 -timeout 1s -workers 512 192.0.2.10
-```
-
-## Service modules
-
-- **FTP:** Checks anonymous access. If both wordlists are supplied, checks their username/password combinations with up to eight workers.
+- **FTP:** Checks anonymous access. When both wordlists are supplied, it also tries their username/password combinations.
 - **HTTP:** Reports the HTTP status and `Server` header. Port `443` uses HTTPS.
 - **SSH:** Reads the server identification banner; it does not attempt authentication.
-- **SMB:** Checks whether TCP port `445` is reachable. SMB authentication and share listing are not implemented yet.
+- **SMB:** Checks whether TCP port `445` is reachable.
 
-Use MARLOW only on systems and networks you are authorized to assess.
-
-The current engine uses TCP connect scans. Nmap-style scan modes such as SYN or UDP are not available yet. See the [Roadmap](roadmap.md) for planned scan and enumeration families.
+The scanner currently performs TCP connect scans. UDP scans, SYN scans, and operating-system fingerprinting are not implemented. Use MARLOW only on systems and networks you are authorized to assess.
