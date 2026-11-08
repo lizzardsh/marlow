@@ -6,7 +6,7 @@ MARLOW is a modular CLI for authorized network surface discovery and focused ser
 
 The product is organized around four related tasks:
 
-1. **Scan:** find reachable TCP services and collect basic service details.
+1. **Scan:** find reachable TCP and UDP ports and collect basic TCP service details.
 2. **Services:** run protocol-specific checks against discovered services.
 3. **DNS:** inspect DNS records and discover related hostnames.
 4. **Web:** inspect HTTP services and discover paths using user-provided wordlists.
@@ -24,7 +24,7 @@ Only `scan` is implemented today. The other commands describe the intended struc
 
 ## Available today
 
-- Concurrent TCP connect scans of common ports, chosen ports, ranges, or all TCP ports
+- Concurrent TCP connect and UDP datagram scans of top ports, chosen ports, ranges, or all ports
 - Optional banner and basic version collection for FTP, SSH, SMTP, POP3, IMAP, and HTTP(S) on common web ports
 - Optional FTP, HTTP, SSH, and SMB checks
 - Configurable scan timeout and worker count
@@ -51,4 +51,4 @@ Only `scan` is implemented today. The other commands describe the intended struc
 
 ## Out of scope for the current scan engine
 
-The current scanner uses TCP connect probes. UDP scanning, SYN scanning, and operating-system fingerprinting need separate designs and are not implied by `--all-ports` or `--versions`.
+The scanner uses TCP connect probes and generic UDP datagrams. UDP silence is ambiguous and is reported as `OPEN|FILTERED`; service-specific UDP probes, SYN scanning, and operating-system fingerprinting are not implemented.

@@ -1,8 +1,12 @@
 # Updates
 
-## Unreleased
+## v0.2.1
 
-### Options
+- Default scans now cover the top 1,000 TCP ports and top 1,000 UDP ports, ranked independently using Nmap `nmap-services` frequency data.
+- Added `--protocol tcp|udp|both`; `--ports` and `--all-ports` apply to the selected protocols.
+- UDP results distinguish replies (`OPEN`), ICMP unreachable (`CLOSED`), and silence (`OPEN|FILTERED`).
+
+## v0.2.0 — Options
 
 - Standardized usage around `marlow scan <target> [options]`.
 - Added readable options: `--ports`, `--all-ports`, `--versions`, `--service-checks`, and `--modules`.
@@ -11,7 +15,7 @@
 
 ### Current scan scope
 
-MARLOW currently performs TCP connect scans. `--all-ports` scans all TCP ports; it does not enable SYN, UDP, or other scan modes.
+MARLOW performs TCP connect scans and generic UDP datagram probes. `--all-ports` scans all ports for the selected protocol(s); SYN scanning is not implemented.
 
 The longer-term project scope is a shared enumeration toolkit: port discovery and service checks first, followed by DNS enumeration and HTTP path discovery. See the [Roadmap](roadmap.md); planned items are not available in the current release.
 

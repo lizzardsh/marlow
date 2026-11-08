@@ -6,14 +6,17 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
 type PortResult struct {
-	Port string
-	Open bool
-	Err  error
+	Port     string
+	Protocol string
+	State    string
+	Open     bool
+	Err      error
 }
 
 type Engine struct {
@@ -22,6 +25,13 @@ type Engine struct {
 }
 
 func (e Engine) Scan(ctx context.Context, target string, ports []string) []PortResult {
+	return e.ScanProtocol(ctx, target, ports, "tcp")
+}
+
+// ScanProtocol probes the supplied ports using TCP connect or UDP datagrams.
+// UDP silence is reported as open|filtered because an open UDP service may not
+// reply to an empty probe.
+func (e Engine) ScanProtocol(ctx context.Context, target string, ports []string, protocol string) []PortResult {
 	workers := e.Workers
 	if workers < 1 {
 		workers = 128
@@ -46,17 +56,25 @@ func (e Engine) Scan(ctx context.Context, target string, ports []string) []PortR
 			for port := range jobs {
 				result := func() (result PortResult) {
 					result.Port = port
+					result.Protocol = protocol
 					defer func() {
 						if recovered := recover(); recovered != nil {
 							result.Err = fmt.Errorf("scan worker recovered: %v", recovered)
 						}
 					}()
 					address := net.JoinHostPort(target, port)
-					conn, err := (&net.Dialer{Timeout: timeout}).DialContext(ctx, "tcp", address)
-					result.Open = err == nil
-					result.Err = err
-					if err == nil {
-						_ = conn.Close()
+					if protocol == "udp" {
+						result.State, result.Open, result.Err = scanUDP(ctx, address, timeout)
+					} else {
+						conn, err := (&net.Dialer{Timeout: timeout}).DialContext(ctx, "tcp", address)
+						result.Open = err == nil
+						result.Err = err
+						if err == nil {
+							result.State = "OPEN"
+							_ = conn.Close()
+						} else {
+							result.State = "CLOSED|FILTERED"
+						}
 					}
 					return result
 				}()
@@ -92,4 +110,30 @@ func (e Engine) Scan(ctx context.Context, target string, ports []string) []PortR
 		return left < right
 	})
 	return out
+}
+
+func scanUDP(ctx context.Context, address string, timeout time.Duration) (string, bool, error) {
+	conn, err := (&net.Dialer{Timeout: timeout}).DialContext(ctx, "udp", address)
+	if err != nil {
+		return "CLOSED|FILTERED", false, err
+	}
+	defer conn.Close()
+	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+		return "OPEN|FILTERED", false, err
+	}
+	if _, err := conn.Write([]byte{0}); err != nil {
+		return "CLOSED|FILTERED", false, err
+	}
+	buffer := make([]byte, 1024)
+	_, err = conn.Read(buffer)
+	if err == nil {
+		return "OPEN", true, nil
+	}
+	if opErr, ok := err.(*net.OpError); ok && strings.Contains(strings.ToLower(opErr.Err.Error()), "refused") {
+		return "CLOSED", false, err
+	}
+	if ne, ok := err.(net.Error); ok && ne.Timeout() {
+		return "OPEN|FILTERED", false, nil
+	}
+	return "CLOSED|FILTERED", false, err
 }
