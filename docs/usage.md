@@ -12,6 +12,7 @@ marlow [OPTIONS] <TARGET_IP_OR_DOMAIN>
 | `-p-`, `--all-ports` | Scan TCP ports `1-65535`. This takes precedence over `-p`. |
 | `-sV <modules>`, `--modules <modules>` | Run explicit modules, one per specified port and in the same order. Supported: `ftp`, `http`, `smb`, `ssh`. `--services` is also accepted. |
 | `-s-`, `--auto-services` | Automatically run a registered module when an open port matches that module’s default port. |
+| `-version-detect`, `--version-detect` | Probe open ports for service banners and basic version details. HTTP probes report status and the `Server` header; HTTPS probes also report the negotiated TLS version. |
 | `-Uw <path>`, `--userlist <path>` | Username wordlist for FTP checks. |
 | `-Pw <path>`, `--passlist <path>` | Password wordlist for FTP checks. Must be supplied with a username list. |
 | `-timeout <duration>`, `--timeout <duration>` | TCP connection timeout per port. Default: `3s`. |
@@ -32,6 +33,14 @@ Scan every TCP port:
 marlow -p- -s- example.org
 marlow --all-ports --auto-services example.org
 ```
+
+Collect basic service and version details from open ports:
+
+```sh
+marlow -p 21,22,25,80,443,8080 -version-detect example.org
+```
+
+Version detection currently reads greetings from FTP, SSH, SMTP, POP3, and IMAP, and sends an HTTP `HEAD` request on common web ports. It reports the server's own banner or `Server` header where available; results depend on what each service reveals and are not a full Nmap service fingerprint database. `-sV` remains the existing option for explicitly mapping service modules to ports.
 
 Run explicit modules. The service list must have one entry for each specified port, in matching order:
 

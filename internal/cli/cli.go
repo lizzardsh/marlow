@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"marlow/pkg/fingerprint"
 	"marlow/pkg/scanner"
 	"marlow/pkg/terminal"
 )
@@ -21,6 +22,7 @@ type options struct {
 	services    string
 	allPorts    bool
 	defaultMods bool
+	versionInfo bool
 	userPath    string
 	passPath    string
 	timeout     time.Duration
@@ -72,6 +74,12 @@ func Run(args []string) error {
 		fmt.Println(terminal.Paint(terminal.Error, "[-] No open TCP ports found"))
 		return nil
 	}
+	if opts.versionInfo {
+		for _, port := range openPorts {
+			result := fingerprint.Detect(context.Background(), target, port, opts.timeout)
+			fmt.Println(terminal.Paint(terminal.Info, fmt.Sprintf("[*] SERVICE: %s:%s service=%s version=%s", target, port, result.Service, result.Version)))
+		}
+	}
 	return runModules(target, ports, openPorts, opts, users, passwords)
 }
 
@@ -89,6 +97,8 @@ func parseArgs(args []string) (options, string, error) {
 	fs.StringVar(&opts.services, "modules", "", "Alias for -sV")
 	fs.BoolVar(&opts.defaultMods, "s-", false, "Run a registered module matching each open port")
 	fs.BoolVar(&opts.defaultMods, "auto-services", false, "Alias for -s-")
+	fs.BoolVar(&opts.versionInfo, "version-detect", false, "Probe open ports for service and version details")
+	fs.BoolVar(&opts.versionInfo, "service-version", false, "Alias for -version-detect")
 	fs.StringVar(&opts.userPath, "Uw", "", "FTP username wordlist")
 	fs.StringVar(&opts.userPath, "userlist", "", "Alias for -Uw")
 	fs.StringVar(&opts.passPath, "Pw", "", "FTP password wordlist")
@@ -99,7 +109,7 @@ func parseArgs(args []string) (options, string, error) {
 		fmt.Fprintln(fs.Output(), "Usage: marlow [OPTIONS] <TARGET>")
 		fmt.Fprintln(fs.Output(), "\nOptions:")
 		fs.PrintDefaults()
-		fmt.Fprintln(fs.Output(), "\nExamples:\n  marlow -p 21,80,443 -s- example.org\n  marlow -p- -s- 192.0.2.10\n  marlow --ports 22 --modules ssh 192.0.2.10")
+		fmt.Fprintln(fs.Output(), "\nExamples:\n  marlow -p 21,80,443 -s- example.org\n  marlow -p- -version-detect 192.0.2.10\n  marlow --ports 22 --modules ssh 192.0.2.10")
 	}
 
 	if err := fs.Parse(args); err != nil {

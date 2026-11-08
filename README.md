@@ -18,6 +18,7 @@ MARLOW is intended to bring network discovery and enumeration tasks under one mo
 
 - Concurrent TCP connect scanning with configurable workers and timeout
 - Explicit ports, ranges, or all TCP ports
+- Optional service banner and basic version detection on open ports
 - FTP, HTTP, SSH, and SMB reachability/service checks
 - Optional FTP checks with user-provided wordlists
 
